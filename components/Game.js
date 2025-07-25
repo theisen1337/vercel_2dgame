@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 const TILE_SIZE = 32;
 const MAP = [
@@ -22,7 +23,24 @@ const MAP = [
 export default function Game() {
   const canvasRef = useRef(null);
   const [playerPos, setPlayerPos] = useState({ x: 1, y: 1 });
+  const channelRef = useRef(null);
+  const clientIdRef = useRef(`${Date.now()}-${Math.random()}`);
+  const [otherPlayers, setOtherPlayers] = useState({});
 
+  // Subscribe to Supabase Realtime channel for player positions
+  useEffect(() => {
+    const ch = supabase.channel('game-channel');
+    channelRef.current = ch;
+    ch.on('broadcast', { event: 'position' }, ({ payload }) => {
+      const { id, x, y } = payload;
+      if (id === clientIdRef.current) return;
+      setOtherPlayers(prev => ({ ...prev, [id]: { x, y } }));
+    });
+    ch.subscribe();
+    return () => { ch.unsubscribe(); };
+  }, []);
+
+  // Draw function: include other players
   const draw = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -37,34 +55,43 @@ export default function Game() {
       }
     }
 
-    // draw player
+    // draw other players
+    Object.values(otherPlayers).forEach(({ x, y }) => {
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    });
+
+    // draw local player
     ctx.fillStyle = 'red';
     ctx.fillRect(playerPos.x * TILE_SIZE, playerPos.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   };
 
-  useEffect(() => {
-    draw();
-  }, [playerPos]);
+  // Redraw when positions update
+  useEffect(() => { draw(); }, [playerPos, otherPlayers]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      setPlayerPos((pos) => {
+      setPlayerPos(pos => {
         let { x, y } = pos;
         if (e.key === 'ArrowUp') y = Math.max(0, y - 1);
         if (e.key === 'ArrowDown') y = Math.min(MAP.length - 1, y + 1);
         if (e.key === 'ArrowLeft') x = Math.max(0, x - 1);
         if (e.key === 'ArrowRight') x = Math.min(MAP[0].length - 1, x + 1);
         if (MAP[y][x] === 1) return pos;
-        return { x, y };
+        const newPos = { x, y };
+        // Broadcast new position
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'position',
+          payload: { id: clientIdRef.current, x, y },
+        });
+        return newPos;
       });
     };
 
     window.addEventListener('keydown', handleKeyDown);
     draw();
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => { window.removeEventListener('keydown', handleKeyDown); };
   }, []);
 
   return (
