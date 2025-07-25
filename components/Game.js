@@ -28,8 +28,11 @@ export default function Game() {
 
   // Persist our position and subscribe to Supabase Realtime DB changes
   useEffect(() => {
-    // Upsert our initial position
-    supabase.from('players').upsert({ id: clientIdRef.current, x: playerPos.x, y: playerPos.y });
+    // Upsert our initial position with error logging
+    (async () => {
+      const { data, error } = await supabase.from('players').upsert({ id: clientIdRef.current, x: playerPos.x, y: playerPos.y });
+      console.log('Supabase initial upsert:', { data, error });
+    })();
 
     // Fetch existing players
     supabase.from('players').select('*').then(({ data }) => {
@@ -100,8 +103,9 @@ export default function Game() {
         if (e.key === 'ArrowRight') x = Math.min(MAP[0].length - 1, x + 1);
         if (MAP[y][x] === 1) return pos;
         const newPos = { x, y };
-        // upsert our new position in the DB
-        supabase.from('players').upsert({ id: clientIdRef.current, x, y });
+        // upsert our new position in the DB with error logging
+        supabase.from('players').upsert({ id: clientIdRef.current, x, y })
+          .then(({ data, error }) => console.log('Supabase move upsert:', { data, error }));
         return newPos;
       });
     };
