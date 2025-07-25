@@ -11,7 +11,12 @@ This is a simple 2D top-down tilemap game built with Next.js and Supabase.
    npm install
    ```
 
-3. Run the development server:
+3. In your Supabase project, create a table named `players` with columns:
+   - `id` (text, primary key)
+   - `x` (integer)
+   - `y` (integer)
+
+4. Run the development server:
    ```
    npm run dev
    ```

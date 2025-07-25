@@ -23,21 +23,42 @@ const MAP = [
 export default function Game() {
   const canvasRef = useRef(null);
   const [playerPos, setPlayerPos] = useState({ x: 1, y: 1 });
-  const channelRef = useRef(null);
   const clientIdRef = useRef(`${Date.now()}-${Math.random()}`);
   const [otherPlayers, setOtherPlayers] = useState({});
 
-  // Subscribe to Supabase Realtime channel for player positions
+  // Persist our position and subscribe to Supabase Realtime DB changes
   useEffect(() => {
-    const ch = supabase.channel('game-channel');
-    channelRef.current = ch;
-    ch.on('broadcast', { event: 'position' }, ({ payload }) => {
-      const { id, x, y } = payload;
-      if (id === clientIdRef.current) return;
-      setOtherPlayers(prev => ({ ...prev, [id]: { x, y } }));
+    // Upsert our initial position
+    supabase.from('players').upsert({ id: clientIdRef.current, x: playerPos.x, y: playerPos.y });
+
+    // Fetch existing players
+    supabase.from('players').select('*').then(({ data }) => {
+      const others = {};
+      data.forEach(rec => {
+        if (rec.id !== clientIdRef.current) others[rec.id] = { x: rec.x, y: rec.y };
+      });
+      setOtherPlayers(others);
     });
-    ch.subscribe();
-    return () => { ch.unsubscribe(); };
+
+    // Subscribe to table changes
+    const subscription = supabase
+      .channel('players-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'players' }, ({ new: rec }) => {
+        if (rec.id !== clientIdRef.current) setOtherPlayers(prev => ({ ...prev, [rec.id]: { x: rec.x, y: rec.y } }));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'players' }, ({ new: rec }) => {
+        if (rec.id !== clientIdRef.current) setOtherPlayers(prev => ({ ...prev, [rec.id]: { x: rec.x, y: rec.y } }));
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'players' }, ({ old: rec }) => {
+        setOtherPlayers(prev => { const next = { ...prev }; delete next[rec.id]; return next; });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+      // Remove our record on exit
+      supabase.from('players').delete().eq('id', clientIdRef.current);
+    };
   }, []);
 
   // Draw function: include other players
@@ -55,7 +76,7 @@ export default function Game() {
       }
     }
 
-    // draw other players
+    // draw other players from DB
     Object.values(otherPlayers).forEach(({ x, y }) => {
       ctx.fillStyle = 'blue';
       ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -79,12 +100,8 @@ export default function Game() {
         if (e.key === 'ArrowRight') x = Math.min(MAP[0].length - 1, x + 1);
         if (MAP[y][x] === 1) return pos;
         const newPos = { x, y };
-        // Broadcast new position
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'position',
-          payload: { id: clientIdRef.current, x, y },
-        });
+        // upsert our new position in the DB
+        supabase.from('players').upsert({ id: clientIdRef.current, x, y });
         return newPos;
       });
     };
