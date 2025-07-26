@@ -29,7 +29,8 @@ A modern 2D top-down RPG game built with Next.js and Supabase for real-time mult
 - **Real-time Synchronization**: Player positions sync across all clients
 - **Direction Tracking**: Player facing direction is shared
 - **Live Updates**: See other players move in real-time
-- **Persistent Sessions**: Player data stored in Supabase
+- **Session Management**: Persistent sessions with automatic save/restore
+- **Cross-Browser Persistence**: Return to the same position when reopening the game
 
 ## Controls
 
@@ -53,13 +54,24 @@ A modern 2D top-down RPG game built with Next.js and Supabase for real-time mult
    npm install
    ```
 
-2. Set up your Supabase database with a `players` table:
+2. Set up your Supabase database with the required tables:
    ```sql
+   -- Players table for real-time multiplayer
    CREATE TABLE players (
      id TEXT PRIMARY KEY,
      x INTEGER NOT NULL,
      y INTEGER NOT NULL,
      direction INTEGER DEFAULT 0
+   );
+   
+   -- Game sessions table for persistent sessions
+   CREATE TABLE game_sessions (
+     session_id TEXT PRIMARY KEY,
+     player_id TEXT NOT NULL,
+     x INTEGER NOT NULL,
+     y INTEGER NOT NULL,
+     direction INTEGER DEFAULT 0,
+     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
    );
    ```
 
@@ -76,9 +88,11 @@ A modern 2D top-down RPG game built with Next.js and Supabase for real-time mult
 
 The game uses a component-based architecture with:
 - **Game Component**: Main game logic and rendering
+- **Session Manager**: Handles session persistence and restoration
 - **Canvas Rendering**: Efficient 2D graphics with camera system
 - **State Management**: React hooks for player and world state
 - **Real-time Sync**: Supabase subscriptions for multiplayer
+- **Local Storage**: Browser-based session ID persistence
 
 ## Future Enhancements
 
