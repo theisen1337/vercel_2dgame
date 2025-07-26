@@ -176,12 +176,11 @@ export default function Game() {
           });
         }
         
-        // Initialize player in database
+        // Initialize player in database (without direction column for now)
         const { data, error } = await supabase.from('players').upsert({ 
           id: newClientId, 
           x: playerPos.x, 
-          y: playerPos.y,
-          direction: playerDirection 
+          y: playerPos.y
         });
         
         if (error) {
@@ -217,7 +216,7 @@ export default function Game() {
         if (rec.id !== clientId) others[rec.id] = { 
           x: rec.x, 
           y: rec.y, 
-          direction: rec.direction || 0 
+          direction: 0 // Default direction since column doesn't exist
         };
       });
       setOtherPlayers(others);
@@ -229,13 +228,13 @@ export default function Game() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'players' }, ({ new: rec }) => {
         if (rec.id !== clientId) setOtherPlayers(prev => ({ 
           ...prev, 
-          [rec.id]: { x: rec.x, y: rec.y, direction: rec.direction || 0 } 
+          [rec.id]: { x: rec.x, y: rec.y, direction: 0 } 
         }));
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'players' }, ({ new: rec }) => {
         if (rec.id !== clientId) setOtherPlayers(prev => ({ 
           ...prev, 
-          [rec.id]: { x: rec.x, y: rec.y, direction: rec.direction || 0 } 
+          [rec.id]: { x: rec.x, y: rec.y, direction: 0 } 
         }));
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'players' }, ({ old: rec }) => {
@@ -271,7 +270,11 @@ export default function Game() {
   // Draw function with improved graphics
   const draw = () => {
     const canvas = canvasRef.current;
+    if (!canvas) return; // Guard against null canvas
+    
     const ctx = canvas.getContext('2d');
+    if (!ctx) return; // Guard against null context
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw map with camera offset
@@ -322,7 +325,11 @@ export default function Game() {
   };
 
   // Redraw when positions update
-  useEffect(() => { draw(); }, [playerPos, otherPlayers, playerDirection, playerAnimation, camera]);
+  useEffect(() => { 
+    if (!isLoading && canvasRef.current) {
+      draw(); 
+    }
+  }, [playerPos, otherPlayers, playerDirection, playerAnimation, camera, isLoading]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -383,12 +390,11 @@ export default function Game() {
         if (MAP[y][x] !== 0) {
           if (moved) {
             setPlayerDirection(newDirection);
-            // Update position in DB
+            // Update position in DB (without direction column for now)
             supabase.from('players').upsert({ 
               id: clientId, 
               x, 
-              y, 
-              direction: newDirection 
+              y
             }).then(({ data, error }) => {
               if (error) console.error('Supabase move upsert error:', error);
             });
