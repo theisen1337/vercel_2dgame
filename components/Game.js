@@ -72,13 +72,6 @@ export default function Game() {
     initializeSession();
   }, []);
 
-  // Initialize renderer when canvas is ready
-  useEffect(() => {
-    if (canvasRef.current && !rendererRef.current) {
-      rendererRef.current = new GameRenderer(canvasRef.current);
-    }
-  }, []);
-
   // Calculate responsive canvas size
   useEffect(() => {
     const updateCanvasSize = () => {
@@ -90,6 +83,32 @@ export default function Game() {
     window.addEventListener('resize', updateCanvasSize);
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
+
+  // Initialize renderer when canvas is ready and has correct size
+  useEffect(() => {
+    if (canvasRef.current && canvasSize.width > 0 && canvasSize.height > 0) {
+      console.log('Initializing renderer with canvas:', canvasRef.current);
+      
+      // Set canvas size
+      canvasRef.current.width = canvasSize.width;
+      canvasRef.current.height = canvasSize.height;
+      
+      // Initialize renderer
+      rendererRef.current = new GameRenderer(canvasRef.current);
+      
+      // Force initial render
+      if (rendererRef.current) {
+        rendererRef.current.render({
+          otherPlayers,
+          playerPos,
+          playerDirection,
+          playerAnimation,
+          playerColors,
+          camera
+        });
+      }
+    }
+  }, [canvasSize]);
 
   // Initialize multiplayer when clientId is ready
   useEffect(() => {
@@ -216,9 +235,10 @@ export default function Game() {
     setIsLoading(false);
   }, [playerPos, playerDirection, playerColors]);
 
-  // Render game
+  // Render game when state changes
   useEffect(() => {
-    if (!isLoading && rendererRef.current) {
+    if (!isLoading && rendererRef.current && canvasRef.current) {
+      console.log('Rendering game with state:', { playerPos, playerDirection, camera });
       rendererRef.current.render({
         otherPlayers,
         playerPos,
@@ -228,7 +248,7 @@ export default function Game() {
         camera
       });
     }
-  }, [otherPlayers, playerPos, playerDirection, playerAnimation, playerColors, camera, isLoading, canvasSize]);
+  }, [otherPlayers, playerPos, playerDirection, playerAnimation, playerColors, camera, isLoading]);
 
   // Cleanup on unmount
   useEffect(() => {
