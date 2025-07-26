@@ -1,40 +1,91 @@
-# Top-Down Multiplayer Game
+# RPG Adventure Game
 
-This is a simple 2D top-down tilemap game built with Next.js and Supabase.
+A modern 2D top-down RPG game built with Next.js and Supabase for real-time multiplayer functionality.
 
-## Setup
+## Features
 
-1. Copy `.env.local.example` to `.env.local` and fill in your Supabase credentials.
+### 🎮 Game Mechanics
+- **8-Directional Movement**: Full directional control using WASD, arrow keys, and diagonal movement (Q, E, Z, C)
+- **Animated Player Sprites**: Programmatically generated character sprites with walking animations
+- **Camera System**: Smooth camera following that keeps the player centered
+- **Collision Detection**: Proper wall and obstacle collision
 
-2. Install dependencies:
-   ```
+### 🗺️ World Design
+- **Doubled Map Size**: 40x40 tile world (previously 20x15)
+- **RPG Tileset**: Multiple tile types including:
+  - Walls (dark green)
+  - Paths (brown)
+  - Grass (light green with texture)
+  - Water (blue with depth effect)
+- **Larger Playable Area**: More space to explore and interact
+
+### 🎨 Visual Improvements
+- **Pixel-Perfect Rendering**: Crisp, retro-style graphics
+- **Dynamic Lighting**: Enhanced visual depth with shadows and highlights
+- **Smooth Animations**: 4-frame walking animation cycle
+- **Modern UI**: Clean, RPG-style interface with game information
+
+### 🌐 Multiplayer Features
+- **Real-time Synchronization**: Player positions sync across all clients
+- **Direction Tracking**: Player facing direction is shared
+- **Live Updates**: See other players move in real-time
+- **Persistent Sessions**: Player data stored in Supabase
+
+## Controls
+
+- **WASD** or **Arrow Keys**: Basic movement
+- **Q**: Move up-left
+- **E**: Move up-right  
+- **Z**: Move down-left
+- **C**: Move down-right
+
+## Technical Stack
+
+- **Frontend**: Next.js, React
+- **Backend**: Supabase (PostgreSQL + Real-time)
+- **Graphics**: HTML5 Canvas with programmatic sprite generation
+- **Styling**: CSS with pixel-perfect rendering
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
    npm install
    ```
 
-3. In your Supabase project, create a table named `players` with columns:
-   - `id` (text, primary key)
-   - `x` (integer)
-   - `y` (integer)
+2. Set up your Supabase database with a `players` table:
+   ```sql
+   CREATE TABLE players (
+     id TEXT PRIMARY KEY,
+     x INTEGER NOT NULL,
+     y INTEGER NOT NULL,
+     direction INTEGER DEFAULT 0
+   );
+   ```
+
+3. Configure your Supabase credentials in `lib/supabase.js`
 
 4. Run the development server:
-   ```
+   ```bash
    npm run dev
    ```
 
-   Visit http://localhost:3000 to play.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Multiplayer
+## Game Architecture
 
-This game uses Supabase Realtime to sync player positions in real-time.
+The game uses a component-based architecture with:
+- **Game Component**: Main game logic and rendering
+- **Canvas Rendering**: Efficient 2D graphics with camera system
+- **State Management**: React hooks for player and world state
+- **Real-time Sync**: Supabase subscriptions for multiplayer
 
-## Deployment to Vercel
+## Future Enhancements
 
-1. Push your code to GitHub.
-
-2. Import your repository into Vercel.
-
-3. In the Vercel Dashboard, set the environment variables matching `.env.local`.
-
-4. Deploy the project.
-
+- Inventory system
+- NPCs and quests
+- Combat mechanics
+- Sound effects and music
+- More tile types and environments
+- Character customization 
 5. Your live game will be available at `https://your-vercel-app.vercel.app`. 
