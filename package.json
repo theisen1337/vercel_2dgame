@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "gitpush": "powershell -ExecutionPolicy Bypass -Command \"git add .; git commit -m 'Refactor code into modules; add database migration and debugging logs'; git push\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.52.1",

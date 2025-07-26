@@ -84,31 +84,31 @@ export default function Game() {
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
 
-  // Initialize renderer when canvas is ready and has correct size
+  // Initialize renderer when loading completes or canvas size changes
   useEffect(() => {
-    if (canvasRef.current && canvasSize.width > 0 && canvasSize.height > 0) {
+    if (!isLoading && canvasRef.current && canvasSize.width > 0 && canvasSize.height > 0) {
       console.log('Initializing renderer with canvas:', canvasRef.current);
       
       // Set canvas size
       canvasRef.current.width = canvasSize.width;
       canvasRef.current.height = canvasSize.height;
       
-      // Initialize renderer
-      rendererRef.current = new GameRenderer(canvasRef.current);
+      // Initialize renderer if not already
+      if (!rendererRef.current) {
+        rendererRef.current = new GameRenderer(canvasRef.current);
+      }
       
       // Force initial render
-      if (rendererRef.current) {
-        rendererRef.current.render({
-          otherPlayers,
-          playerPos,
-          playerDirection,
-          playerAnimation,
-          playerColors,
-          camera
-        });
-      }
+      rendererRef.current.render({
+        otherPlayers,
+        playerPos,
+        playerDirection,
+        playerAnimation,
+        playerColors,
+        camera
+      });
     }
-  }, [canvasSize]);
+  }, [canvasSize, isLoading]);
 
   // Initialize multiplayer when clientId is ready
   useEffect(() => {
