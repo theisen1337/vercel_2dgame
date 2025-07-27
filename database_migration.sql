@@ -28,6 +28,16 @@ WHERE direction IS NULL
    OR pants_color IS NULL 
    OR last_activity IS NULL;
 
+-- Fix RLS policies
+DROP POLICY IF EXISTS "Allow all operations on players" ON players;
+DROP POLICY IF EXISTS "Allow all operations on game_sessions" ON game_sessions;
+
+CREATE POLICY "Allow all operations on players" ON players FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations on game_sessions" ON game_sessions FOR ALL USING (true) WITH CHECK (true);
+
+-- Enable realtime for the players table
+ALTER PUBLICATION supabase_realtime ADD TABLE players;
+
 -- Verify the table structure
 SELECT column_name, data_type, is_nullable, column_default 
 FROM information_schema.columns 

@@ -45,6 +45,10 @@ CREATE TABLE IF NOT EXISTS game_sessions (
 ALTER TABLE players ENABLE ROW LEVEL SECURITY;
 ALTER TABLE game_sessions ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow all operations on players" ON players;
+DROP POLICY IF EXISTS "Allow all operations on game_sessions" ON game_sessions;
+
 -- Create policies to allow all operations (for demo purposes)
 -- In production, you should create more restrictive policies
 CREATE POLICY "Allow all operations on players" ON players FOR ALL USING (true) WITH CHECK (true);

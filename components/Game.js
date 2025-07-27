@@ -96,8 +96,6 @@ export default function Game() {
   // Initialize renderer when loading completes or canvas size changes
   useEffect(() => {
     if (!isLoading && canvasRef.current && canvasSize.width > 0 && canvasSize.height > 0) {
-      console.log('Initializing renderer with canvas:', canvasRef.current);
-      
       // Set canvas size
       canvasRef.current.width = canvasSize.width;
       canvasRef.current.height = canvasSize.height;
@@ -122,7 +120,6 @@ export default function Game() {
   // Initialize multiplayer when clientId is ready
   useEffect(() => {
     if (clientId && !multiplayerRef.current) {
-      console.log('[Game] Initializing multiplayer manager with clientId:', clientId);
       multiplayerRef.current = new MultiplayerManager(clientId, setOtherPlayers);
       
       // Initialize player in database
@@ -260,7 +257,6 @@ export default function Game() {
   // Render game when state changes
   useEffect(() => {
     if (!isLoading && rendererRef.current && canvasRef.current) {
-      console.log('Rendering game with state:', { playerPos, playerDirection, camera });
       rendererRef.current.render({
         otherPlayers,
         playerPos,
