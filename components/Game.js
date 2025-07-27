@@ -61,7 +61,16 @@ export default function Game() {
             sessionId: currentSessionId
           });
         }
-        
+
+        // Persist initial session data
+        await saveSessionData(currentSessionId, {
+          id: newClientId,
+          x: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.x : playerPos.x,
+          y: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.y : playerPos.y,
+          direction: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.direction || 0 : playerDirection,
+          colors: sessionData && sessionData.colors ? sessionData.colors : DEFAULT_PLAYER_COLORS
+        });
+
         setIsLoading(false);
       } catch (error) {
         console.error('Error initializing session:', error);
