@@ -38,7 +38,7 @@ export default function Game() {
         const currentSessionId = getSessionId();
         setSessionId(currentSessionId);
         
-        const newClientId = `${currentSessionId}-${Date.now()}`;
+        const newClientId = currentSessionId;
         setClientId(newClientId);
         
         const sessionData = await loadSessionData(currentSessionId);
@@ -122,6 +122,7 @@ export default function Game() {
   // Initialize multiplayer when clientId is ready
   useEffect(() => {
     if (clientId && !multiplayerRef.current) {
+      console.log('[Game] Initializing multiplayer manager with clientId:', clientId);
       multiplayerRef.current = new MultiplayerManager(clientId, setOtherPlayers);
       
       // Initialize player in database
@@ -134,6 +135,18 @@ export default function Game() {
       
       // Initialize multiplayer
       multiplayerRef.current.initialize();
+    }
+  }, [clientId]);
+
+  // Update player data in database when position/colors change
+  useEffect(() => {
+    if (multiplayerRef.current && clientId) {
+      multiplayerRef.current.initializePlayer({
+        x: playerPos.x,
+        y: playerPos.y,
+        direction: playerDirection,
+        colors: playerColors
+      });
     }
   }, [clientId, playerPos, playerDirection, playerColors]);
 
@@ -225,7 +238,7 @@ export default function Game() {
     setIsLoading(true);
     
     const currentSessionId = getSessionId();
-    const newClientId = `${currentSessionId}-${Date.now()}`;
+    const newClientId = currentSessionId;
     setClientId(newClientId);
     
     // Cleanup old multiplayer

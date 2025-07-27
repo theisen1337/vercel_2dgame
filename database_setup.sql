@@ -47,5 +47,8 @@ ALTER TABLE game_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Create policies to allow all operations (for demo purposes)
 -- In production, you should create more restrictive policies
-CREATE POLICY "Allow all operations on players" ON players FOR ALL USING (true);
-CREATE POLICY "Allow all operations on game_sessions" ON game_sessions FOR ALL USING (true); 
+CREATE POLICY "Allow all operations on players" ON players FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations on game_sessions" ON game_sessions FOR ALL USING (true) WITH CHECK (true);
+
+-- Enable realtime for the players table
+ALTER PUBLICATION supabase_realtime ADD TABLE players; 
