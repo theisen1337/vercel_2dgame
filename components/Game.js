@@ -65,9 +65,9 @@ export default function Game() {
         // Persist initial session data
         await saveSessionData(currentSessionId, {
           id: newClientId,
-          x: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.x : playerPos.x,
-          y: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.y : playerPos.y,
-          direction: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.direction || 0 : playerDirection,
+          x: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.x : 1,
+          y: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.y : 1,
+          direction: sessionData && isSessionValid(sessionData.last_updated) ? sessionData.direction || 0 : 0,
           colors: sessionData && sessionData.colors ? sessionData.colors : DEFAULT_PLAYER_COLORS
         });
 
@@ -147,6 +147,19 @@ export default function Game() {
     }
   }, [clientId, playerPos, playerDirection, playerColors]);
 
+  // Save session data whenever position changes (backup)
+  useEffect(() => {
+    if (sessionId && clientId && !isLoading) {
+      saveSessionData(sessionId, {
+        id: clientId,
+        x: playerPos.x,
+        y: playerPos.y,
+        direction: playerDirection,
+        colors: playerColors
+      });
+    }
+  }, [sessionId, clientId, playerPos.x, playerPos.y, playerDirection, playerColors, isLoading]);
+
   // Initialize input handler
   useEffect(() => {
     if (!inputRef.current) {
@@ -188,7 +201,7 @@ export default function Game() {
         // Update multiplayer
         multiplayerRef.current?.updatePlayerPosition(newPos.x, newPos.y, direction);
         
-        // Save session data
+        // Save session data with the NEW position
         if (sessionId) {
           saveSessionData(sessionId, {
             id: clientId,
